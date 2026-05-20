@@ -3,10 +3,8 @@
 ### 26Co2026 - Grupo 07
 ### Responsable de la entrega:
 
-| N° SIU | Apellidos, Nombres | Fecha | Deadline |
-| :----- | :--------------------- | :------: | :-------: |
-| e2605  | Guirula, Lucia Agostina | 23/05/2026 | Semana 04 |
-| e2619  | Urian Florez, Brajhan Andres | 23/05/2026 | Semana 04 |
+| N° SIU | Apellidos, Nombres     | Fecha      |  Deadline |
+| :----- | :--------------------- | :--------: | :-------: |
 | e2622  | Sanabria, Angel Javier | 23/05/2026 | Semana 04 |
 
 ---
