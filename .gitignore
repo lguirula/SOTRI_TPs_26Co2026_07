@@ -1,0 +1,27 @@
+# Archivos del sistema y del Workspace de Eclipse/STM32CubeIDE
+.metadata/
+RemoteSystemsTempFiles/
+.recommenders/
+
+# Carpetas de compilación (Binarios y archivos temporales)
+**/Debug/
+**/Release/
+**/bin/
+**/obj/
+
+# Extensiones de archivos generados por el compilador y empaquetados
+*.elf
+*.bin
+*.hex
+*.map
+*.o
+*.su
+*.d
+
+# Archivos de configuración local del usuario (pueden variar por PC)
+*.launch
+.settings/
+
+# Archivos del sistema operativo
+Thumbs.db
+.DS_Store
