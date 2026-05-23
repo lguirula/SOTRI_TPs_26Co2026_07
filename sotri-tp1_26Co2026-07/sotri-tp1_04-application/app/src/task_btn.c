@@ -79,6 +79,9 @@ void task_btn(void *parameters)
 	/*  Declare & Initialize Task Function variables */
 	g_task_btn_cnt = G_TASK_BTN_CNT_INI;
 
+	TickType_t xLastWakeTime = xTaskGetTickCount();
+	const TickType_t xPeriod = pdMS_TO_TICKS(100);
+
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
 	LOGGER_INFO("%s is running - Tick [mS] = %3d", pcTaskGetName(NULL), (int)xTaskGetTickCount());
@@ -92,7 +95,8 @@ void task_btn(void *parameters)
 		/* Run Task Statechart */
     	task_btn_statechart();
 
-    	vTaskDelay(10);
+    	vTaskDelayUntil(&xLastWakeTime, xPeriod);
+
 	}
 }
 
