@@ -5,7 +5,7 @@
 
 | N° SIU | Apellidos, Nombres     | Fecha      |  Deadline |
 | :----- | :--------------------- | :--------: | :-------: |
-| e2622  | Sanabria, Angel Javier | 23/05/2026 | Semana 04 |
+| e2619  | Urian, Andres | 23/05/2026 | Semana 04 |
 
 ---
 ## Descripción del TP
