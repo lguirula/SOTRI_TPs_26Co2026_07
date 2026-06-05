@@ -1,4 +1,4 @@
-##Paso 03: Consultar a Gemini Pro
+## Paso 03: Consultar a Gemini Pro
 
 El código fuente de este Trabajo Práctico establece una arquitectura basada en **FreeRTOS** diseñada para controlar y simular un sistema de múltiples compuertas o puertas (Gates). Mantiene el paradigma orientado a estímulos o eventos mediante interrupciones de hardware y, al mismo tiempo, incorpora una máquina de pruebas (Test Task) para inyectar secuencias lógicas de funcionamiento.
 
