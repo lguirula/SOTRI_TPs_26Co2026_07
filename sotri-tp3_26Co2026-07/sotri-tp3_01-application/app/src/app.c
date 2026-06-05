@@ -86,7 +86,8 @@ uint32_t g_tasks_cnt;
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_a;
 TaskHandle_t h_task_b;
-SemaphoreHandle_t sem_prod_cons;
+SemaphoreHandle_t h_ATaskArrived_bin_sem;
+SemaphoreHandle_t h_BTaskArrived_bin_sem;
 
 /********************** external functions definition ************************/
 void app_init(void)
@@ -99,9 +100,17 @@ void app_init(void)
 	g_app_stack_overflow_cnt = G_APP_STACK_OVERFLOW_CNT_INI;
 
 	g_tasks_cnt = G_TASKS_CNT_INI;
-	sem_prod_cons = xSemaphoreCreateBinary();
 
-	configASSERT(NULL != sem_prod_cons);
+
+	h_ATaskArrived_bin_sem = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_ATaskArrived_bin_sem);
+	vQueueAddToRegistry(h_ATaskArrived_bin_sem	, "A to B Bin Sem Handle)");
+
+	h_BTaskArrived_bin_sem = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_BTaskArrived_bin_sem);
+	vQueueAddToRegistry(h_BTaskArrived_bin_sem	, "B to A Bin Sem Handle)");
+
+
 	/* Print out: Application Initialized */
 	LOGGER_INFO(" ");
 	LOGGER_INFO("%s is running - Tick [mS] = %lu", GET_NAME(app_init), xTaskGetTickCount());
@@ -126,7 +135,7 @@ void app_init(void)
 					  "Task A",							/* Text name for the task. This is to facilitate debugging only. */
 					  (configMINIMAL_STACK_SIZE),		/* Stack depth in words. */
 					  NULL,								/* We are not using the task parameter. */
-					  (tskIDLE_PRIORITY + 1ul),			/* This task will run at priority 1. */
+					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 1. */
 					  &h_task_a);						/* We are using a variable as task handle. */
 
     /* Check the thread was created successfully. */

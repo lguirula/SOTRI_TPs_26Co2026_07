@@ -59,13 +59,14 @@ extern uint32_t g_app_stack_overflow_cnt;
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread
  * with other thread or to ensure mutual exclusive access to...*/
-
+extern SemaphoreHandle_t h_ATaskArrived_bin_sem;
+extern SemaphoreHandle_t h_BTaskArrived_bin_sem;
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 extern TaskHandle_t h_task_a;
 extern TaskHandle_t h_task_b;
 #include "semphr.h"
 
-extern SemaphoreHandle_t sem_prod_cons;
+//extern SemaphoreHandle_t sem_prod_cons;
 /********************** external functions declaration ***********************/
 extern void app_init(void);
 
@@ -77,3 +78,4 @@ extern void app_init(void);
 #endif /* APP_H_ */
 
 /********************** end of file ******************************************/
+

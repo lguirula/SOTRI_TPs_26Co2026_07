@@ -56,6 +56,12 @@
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
+//const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
+const char *p_task_a_statement_a1 		= "   ==> Task    A - Statement A1";
+const char *p_task_a_wait_b_arraived	= "   ==> Task    A - Wait:		B Arrived";
+const char *p_task_a_signal_a_arraived	= "   ==> Task    A - Signal:	A Arrived ==>";
+const char *p_task_a_statement_a2		= "   ==> Task    A - Statement A2";
+
 const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
 
 /********************** external data declaration ****************************/
@@ -72,20 +78,30 @@ void task_a(void *parameters)
 	LOGGER_INFO(" ");
 	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
+	vTaskPrioritySet(task_a, uxTaskPriorityGet(task_b))
+
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	for (;;)
 	{
 
-		/* Update Task Counter */
 		g_task_a_cnt++;
-		LOGGER_INFO("Producer: produce item");
 
-		xSemaphoreGive(sem_prod_cons);
+//		1 statement a1
+		LOGGER_INFO(p_task_a_statement_a1);
 
+//		2 aArrived . signal ()
+		LOGGER_INFO(p_task_a_signal_a_arraived);
+		xSemaphoreGive(h_ATaskArrived_bin_sem);
 
-    	/* Print out: Wait 250mS */
-		//LOGGER_INFO(p_task_a_wait_250mS);
+//		3 bArrived . wait ()
+		LOGGER_INFO(p_task_a_wait_b_arraived);
+		xSemaphoreTake(h_BTaskArrived_bin_sem, portMAX_DELAY);
+
+//		4 statement a2
+		LOGGER_INFO(p_task_a_statement_a2);
+		LOGGER_INFO(p_task_a_wait_250mS);
 		vTaskDelay(TASK_A_DEL_MAX);
+
 	}
 }
 
