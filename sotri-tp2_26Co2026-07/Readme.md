@@ -1,5 +1,5 @@
 # CESE - Sistemas Operativos de Tiempo Real
-## Trabajo Práctico N°: 1 - Tareas de FreeRTOS
+## Trabajo Práctico N°: 2 - Semaforos y Colas
 ### 26Co2026 - Grupo 07
 ### Responsable de la entrega:
 
