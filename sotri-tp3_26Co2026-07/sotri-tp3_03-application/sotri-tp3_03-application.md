@@ -1,4 +1,4 @@
-##Paso 03: Respuesta de Gemini Pro
+## Paso 03: Respuesta de Gemini Pro
 
 El presente código fuente establece una arquitectura basada en **FreeRTOS** orientada a eventos o estímulos. A diferencia del esquema anterior, en este proyecto se incorporan interrupciones por hardware y una tarea de prueba (Test Task) diseñada para inyectar eventos simulados en el sistema.
 
