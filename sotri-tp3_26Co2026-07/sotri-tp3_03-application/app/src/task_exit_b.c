@@ -76,11 +76,12 @@ void task_exit_b(void *parameters)
 	for (;;)
 	{
 		/* Update Task Counter */
+		xSemaphoreTake(h_exit_b_bin_sem, portMAX_DELAY);
 		g_task_exit_b_cnt++;
-
+		LOGGER_INFO("EXIT B event");
     	/* Print out: Wait 2500mS */
-		LOGGER_INFO(p_task_exit_b_wait_2500mS);
-		vTaskDelay(TASK_EXIT_B_DEL_MAX);
+		//LOGGER_INFO(p_task_exit_b_wait_2500mS);
+		//vTaskDelay(TASK_EXIT_B_DEL_MAX);
 	}
 }
 

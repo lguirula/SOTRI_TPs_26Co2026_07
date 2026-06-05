@@ -76,11 +76,13 @@ void task_entry_b(void *parameters)
 	for (;;)
 	{
 		/* Update Task Counter */
+		xSemaphoreTake(h_entry_b_bin_sem, portMAX_DELAY);
 		g_task_entry_b_cnt++;
 
     	/* Print out: Wait 2500mS */
-		LOGGER_INFO(p_task_entry_b_wait_2500mS);
-		vTaskDelay(TASK_ENTRY_B_DEL_MAX);
+		LOGGER_INFO("ENTRY B event");
+		//LOGGER_INFO(p_task_entry_b_wait_2500mS);
+		//vTaskDelay(TASK_ENTRY_B_DEL_MAX);
 	}
 }
 
