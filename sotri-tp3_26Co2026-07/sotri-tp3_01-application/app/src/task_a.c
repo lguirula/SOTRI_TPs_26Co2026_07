@@ -78,7 +78,7 @@ void task_a(void *parameters)
 	LOGGER_INFO(" ");
 	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
-	vTaskPrioritySet(task_a, uxTaskPriorityGet(h_task_b));
+	vTaskPrioritySet(task_a, (xTaskPriorityGet(h_task_b)));
 
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	for (;;)
