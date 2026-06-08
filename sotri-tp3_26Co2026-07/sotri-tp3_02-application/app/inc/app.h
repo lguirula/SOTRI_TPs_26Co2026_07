@@ -54,6 +54,8 @@ extern volatile uint32_t g_app_tick_cnt;
 extern uint32_t g_task_idle_cnt;
 extern uint32_t g_app_stack_overflow_cnt;
 
+extern uint32_t g_reader_cnt;
+
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
 
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
@@ -63,10 +65,12 @@ extern uint32_t g_app_stack_overflow_cnt;
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 extern TaskHandle_t h_task_a;
 extern TaskHandle_t h_task_b;
-#include "semphr.h"
+extern TaskHandle_t h_task_c;
 
-extern SemaphoreHandle_t mutex_rw;
-extern uint32_t shared_data;
+extern SemaphoreHandle_t h_critical_section_bin_sem;
+extern SemaphoreHandle_t h_reader_mutex_mut_sem;
+
+
 /********************** external functions declaration ***********************/
 extern void app_init(void);
 

@@ -35,6 +35,7 @@
 /********************** inclusions *******************************************/
 /* Project includes */
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Demo includes */
 #include "logger.h"
@@ -42,8 +43,13 @@
 
 /* Application & Tasks includes */
 #include "board.h"
+#include "app.h"
 
 /********************** macros and definitions *******************************/
+#define G_TASK_C_CNT_INI	0ul
+
+#define TASK_C_DEL_ZERO		(pdMS_TO_TICKS(0ul))
+#define TASK_C_DEL_MAX		(pdMS_TO_TICKS(250ul))
 
 /********************** internal data declaration ****************************/
 
@@ -51,17 +57,64 @@
 
 /********************** internal data definition *****************************/
 
+const char *p_task_c_wait_mutex			= "   ==> Task    C - Wait:   mutex";
+const char *p_task_c_wait_room			= "   ==> Task    C - Wait:   room";
+const char *p_task_c_leave_room			= "   ==> Task    C - Signal: leave room ==>";
+const char *p_task_c_empty_room			= "   ==> Task    C - Signal: empty room ==>";
+const char *p_task_c_critical_section	= "   ==> Task    C - Critical section reading";
+const char *p_task_c_wait_250mS			= "   ==> Task    C - Wait:   250mS";
+
 /********************** external data declaration ****************************/
+uint32_t g_task_c_cnt;
 
 /********************** external functions definition ************************/
-void app_it_init(void)
+/* Task thread */
+void task_c(void *parameters)
 {
-	/* Init to be done */
+	/*  Declare & Initialize Task Function variables */
+	g_task_c_cnt = G_TASK_C_CNT_INI;
 
-	/* Protect shared resource */
-	__asm("CPSID i");	/* disable interrupts */
+	/* Print out: Task Initialized */
+	LOGGER_INFO(" ");
+	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
-	__asm("CPSIE i");	/* enable interrupts */
+	/* As per most tasks, this task is implemented in an infinite loop. */
+	for (;;)
+    {
+		/* Update Task Counter */
+		g_task_c_cnt++;
+
+		LOGGER_INFO(p_task_c_wait_mutex);
+		xSemaphoreTake(h_reader_mutex_mut_sem, portMAX_DELAY);
+		{
+			g_reader_cnt += 1;
+			LOGGER_INFO("  Reader Count = %d", (int) g_reader_cnt);
+			if (1 == g_reader_cnt) {
+				LOGGER_INFO(p_task_c_wait_room);
+				xSemaphoreTake(h_critical_section_bin_sem, portMAX_DELAY);
+			}
+		}
+		xSemaphoreGive(h_reader_mutex_mut_sem);
+
+		{
+			LOGGER_INFO(p_task_c_critical_section);
+		}
+
+		xSemaphoreTake(h_reader_mutex_mut_sem, portMAX_DELAY);
+		{
+			g_reader_cnt -= 1;
+			LOGGER_INFO("  Reader Count = %d", (int) g_reader_cnt);
+			if (0 == g_reader_cnt) {
+				LOGGER_INFO(p_task_c_empty_room);
+				xSemaphoreGive(h_critical_section_bin_sem);
+			}
+		}
+		xSemaphoreGive(h_reader_mutex_mut_sem);
+
+    	/* Print out: Wait 250mS */
+		LOGGER_INFO(p_task_c_wait_250mS);
+		vTaskDelay(TASK_C_DEL_MAX);
+	}
 }
 
 /********************** end of file ******************************************/

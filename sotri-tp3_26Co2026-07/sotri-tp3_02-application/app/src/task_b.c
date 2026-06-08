@@ -49,13 +49,19 @@
 #define G_TASK_B_CNT_INI	0ul
 
 #define TASK_B_DEL_ZERO		(pdMS_TO_TICKS(0ul))
-#define TASK_B_DEL_MAX		(pdMS_TO_TICKS(2500ul))
+#define TASK_B_DEL_MAX		(pdMS_TO_TICKS(250ul))
 
 /********************** internal data declaration ****************************/
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
+
+const char *p_task_b_wait_mutex			= "   ==> Task    B - Wait:   mutex";
+const char *p_task_b_wait_room			= "   ==> Task    B - Wait:   room";
+const char *p_task_b_leave_room			= "   ==> Task    B - Signal: leave room ==>";
+const char *p_task_b_empty_room			= "   ==> Task    B - Signal: empty room ==>";
+const char *p_task_b_critical_section	= "   ==> Task    B - Critical section reading";
 const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   250mS";
 
 /********************** external data declaration ****************************/
@@ -77,15 +83,36 @@ void task_b(void *parameters)
     {
 		/* Update Task Counter */
 		g_task_b_cnt++;
-		xSemaphoreTake(mutex_rw, portMAX_DELAY);
 
-		shared_data++;
+		LOGGER_INFO(p_task_b_wait_mutex);
+		xSemaphoreTake(h_reader_mutex_mut_sem, portMAX_DELAY);
+		{
+			g_reader_cnt += 1;
+			LOGGER_INFO("  Reader Count = %d", (int) g_reader_cnt);
+			if (1 == g_reader_cnt) {
+				LOGGER_INFO(p_task_b_wait_room);
+				xSemaphoreTake(h_critical_section_bin_sem, portMAX_DELAY);
+			}
+		}
+		xSemaphoreGive(h_reader_mutex_mut_sem);
 
-		LOGGER_INFO("Writer: value = %lu", shared_data);
+		{
+			LOGGER_INFO(p_task_b_critical_section);
+		}
 
-		xSemaphoreGive(mutex_rw);
+		xSemaphoreTake(h_reader_mutex_mut_sem, portMAX_DELAY);
+		{
+			g_reader_cnt -= 1;
+			LOGGER_INFO("  Reader Count = %d", (int) g_reader_cnt);
+			if (0 == g_reader_cnt) {
+				LOGGER_INFO(p_task_b_empty_room);
+				xSemaphoreGive(h_critical_section_bin_sem);
+			}
+		}
+		xSemaphoreGive(h_reader_mutex_mut_sem);
+
     	/* Print out: Wait 250mS */
-		//LOGGER_INFO(p_task_b_wait_250mS);
+		LOGGER_INFO(p_task_b_wait_250mS);
 		vTaskDelay(TASK_B_DEL_MAX);
 	}
 }

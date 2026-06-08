@@ -32,36 +32,30 @@
  * @author : Juan Manuel Cruz <jcruz@fi.uba.ar> <jcruz@frba.utn.edu.ar>
  */
 
+#ifndef TASK_C_H_
+#define TASK_C_H_
+
+/********************** CPP guard ********************************************/
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /********************** inclusions *******************************************/
-/* Project includes */
-#include "main.h"
 
-/* Demo includes */
-#include "logger.h"
-#include "dwt.h"
+/********************** macros ***********************************************/
 
-/* Application & Tasks includes */
-#include "board.h"
-
-/********************** macros and definitions *******************************/
-
-/********************** internal data declaration ****************************/
-
-/********************** internal functions declaration ***********************/
-
-/********************** internal data definition *****************************/
+/********************** typedef **********************************************/
 
 /********************** external data declaration ****************************/
 
-/********************** external functions definition ************************/
-void app_it_init(void)
-{
-	/* Init to be done */
+/********************** external functions declaration ***********************/
+extern void task_c(void *parameters);
 
-	/* Protect shared resource */
-	__asm("CPSID i");	/* disable interrupts */
-
-	__asm("CPSIE i");	/* enable interrupts */
+/********************** End of CPP guard *************************************/
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* TASK_C_H_ */
 
 /********************** end of file ******************************************/

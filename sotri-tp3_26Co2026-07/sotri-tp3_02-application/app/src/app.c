@@ -46,6 +46,7 @@
 #include "app_it.h"
 #include "task_a.h"
 #include "task_b.h"
+#include "task_c.h"
 
 /********************** macros and definitions *******************************/
 #define G_APP_CNT_INI					0ul
@@ -61,11 +62,11 @@
 
 /********************** internal data definition *****************************/
 const char *p_app	= "RTOS - Event-Triggered Systems (ETS)";
-const char *p_app_	= "sotri-tp3_02-application: Readers-Writers";
+const char *p_app_	= "sotri-tp3_01-application: Producer-Consumer";
 const char *p_app__	= "(Source => CESE - Sistemas Operativos de Tiempo Real)";
 
 /* Source => The Little Book of Semaphores, Allen B. Downey, Version 2.2.1:
- *           4.2 Readers-writers problem (page 65 Classical synchronization patterns)
+ *           4.1 Producer-consumer problem (page 55 Classical synchronization patterns)
  */
 
 /********************** external data declaration ****************************/
@@ -76,6 +77,7 @@ uint32_t g_task_idle_cnt;
 uint32_t g_app_stack_overflow_cnt;
 
 uint32_t g_tasks_cnt;
+uint32_t g_reader_cnt;
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
 
@@ -86,9 +88,10 @@ uint32_t g_tasks_cnt;
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_a;
 TaskHandle_t h_task_b;
-SemaphoreHandle_t mutex_rw;
+TaskHandle_t h_task_c;
+SemaphoreHandle_t h_critical_section_bin_sem;
+SemaphoreHandle_t h_reader_mutex_mut_sem;
 
-uint32_t shared_data = 0;
 /********************** external functions definition ************************/
 void app_init(void)
 {
@@ -100,9 +103,8 @@ void app_init(void)
 	g_app_stack_overflow_cnt = G_APP_STACK_OVERFLOW_CNT_INI;
 
 	g_tasks_cnt = G_TASKS_CNT_INI;
-	mutex_rw = xSemaphoreCreateMutex();
 
-	configASSERT(NULL != mutex_rw);
+	g_reader_cnt = G_TASKS_CNT_INI;
 
 	/* Print out: Application Initialized */
 	LOGGER_INFO(" ");
@@ -119,6 +121,13 @@ void app_init(void)
      * successfully.
      *
      * Add queue or semaphore (binary or counting) or mutex to registry. */
+	h_reader_mutex_mut_sem = xSemaphoreCreateMutex();
+	configASSERT(NULL != h_reader_mutex_mut_sem);
+	vQueueAddToRegistry(h_reader_mutex_mut_sem, "reader mutex semaphore handle");
+
+	h_critical_section_bin_sem = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_critical_section_bin_sem);
+	vQueueAddToRegistry(h_critical_section_bin_sem	, "critical section semphore handle");
 
 	/* Add threads, ... */
     BaseType_t ret;
@@ -128,7 +137,7 @@ void app_init(void)
 					  "Task A",							/* Text name for the task. This is to facilitate debugging only. */
 					  (configMINIMAL_STACK_SIZE),		/* Stack depth in words. */
 					  NULL,								/* We are not using the task parameter. */
-					  (tskIDLE_PRIORITY + 1ul),			/* This task will run at priority 1. */
+					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 1. */
 					  &h_task_a);						/* We are using a variable as task handle. */
 
     /* Check the thread was created successfully. */
@@ -141,6 +150,14 @@ void app_init(void)
 					  NULL,								/* We are not using the task parameter. */
 					  (tskIDLE_PRIORITY + 1ul),			/* This task will run at priority 1. */
 					  &h_task_b);						/* We are using a variable as task handle. */
+
+    /* Task C thread at priority 1 */
+    ret = xTaskCreate(task_c,							/* Pointer to the function thats implement the task. */
+					  "Task C",							/* Text name for the task. This is to facilitate debugging only. */
+					  (configMINIMAL_STACK_SIZE),		/* Stack depth in words. */
+					  NULL,								/* We are not using the task parameter. */
+					  (tskIDLE_PRIORITY + 1ul),			/* This task will run at priority 1. */
+					  &h_task_c);						/* We are using a variable as task handle. */
 
     /* Check the thread was created successfully. */
     configASSERT(pdPASS == ret);

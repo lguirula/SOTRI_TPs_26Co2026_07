@@ -56,6 +56,9 @@
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
+const char *p_task_a_wait_room			= "   ==> Task    A - Wait:   room";
+const char *p_task_a_leave_room			= "   ==> Task    A - Signal: leave room ==>";
+const char *p_task_a_critical_section	= "   ==> Task    A - Critical section";
 const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
 
 /********************** external data declaration ****************************/
@@ -72,18 +75,28 @@ void task_a(void *parameters)
 	LOGGER_INFO(" ");
 	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
+	xSemaphoreGive(h_critical_section_bin_sem);
+	xSemaphoreGive(h_reader_mutex_mut_sem);
+	vTaskPrioritySet(h_task_a, (uxTaskPriorityGet(h_task_b)));
+
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	for (;;)
 	{
 		/* Update Task Counter */
 		g_task_a_cnt++;
-		xSemaphoreTake(mutex_rw, portMAX_DELAY);
+		LOGGER_INFO(p_task_a_wait_room);
 
-		LOGGER_INFO("Reader: value = %lu", shared_data);
+		xSemaphoreTake(h_critical_section_bin_sem, portMAX_DELAY);
+		{
+			LOGGER_INFO(p_task_a_critical_section);
+			g_app_cnt++;
+		}
 
-		xSemaphoreGive(mutex_rw);
+		LOGGER_INFO(p_task_a_leave_room);
+		xSemaphoreGive(h_critical_section_bin_sem);
+
     	/* Print out: Wait 250mS */
-		//LOGGER_INFO(p_task_a_wait_250mS);
+		LOGGER_INFO(p_task_a_wait_250mS);
 		vTaskDelay(TASK_A_DEL_MAX);
 	}
 }
