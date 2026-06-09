@@ -49,31 +49,31 @@
 #define G_TASK_B_CNT_INI	0ul
 
 #define TASK_B_DEL_ZERO		(pdMS_TO_TICKS(0ul))
-#define TASK_B_DEL_MAX		(pdMS_TO_TICKS(2500ul))
+#define TASK_B_DEL_MAX		(pdMS_TO_TICKS(250ul))
 
 /********************** internal data declaration ****************************/
 
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-//const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   250mS";
-const char *p_task_b_statement_a1 		= "   ==> Task    B - Statement B1";
-const char *p_task_b_wait_a_Arrived	= "   ==> Task    B - Wait:		A Arrived";
-const char *p_task_b_signal_b_Arrived	= "   ==> Task    B - Signal:	B Arrived ==>";
-const char *p_task_b_statement_a2		= "   ==> Task    B - Statement B2";
 
-
+const char *p_task_b_wait_items			= "   ==> Task    B - Wait:   items";
+const char *p_task_b_wait_mutex			= "   ==> Task    B - Wait:   mutex";
+const char *p_task_b_signal_spaces		= "   ==> Task    B - Signal: spaces ==>";
+const char *p_task_b_signal_mutex		= "   ==> Task    B - Signal: mutex ==>";
+const char *p_task_b_critical_section	= "   ==> Task    B - Critical section: pop event";
 const char *p_task_b_wait_250mS			= "   ==> Task    B - Wait:   250mS";
 
 /********************** external data declaration ****************************/
 uint32_t g_task_b_cnt;
 
 /********************** external functions definition ************************/
-/* Task thread */
+/* Consumer thread */
 void task_b(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
 	g_task_b_cnt = G_TASK_B_CNT_INI;
+	uint32_t event;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -82,25 +82,27 @@ void task_b(void *parameters)
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	for (;;)
     {
+		/* Update Task Counter */
 		g_task_b_cnt++;
 
-//		1 statement b1
-		LOGGER_INFO(p_task_b_statement_a1);
+		LOGGER_INFO(p_task_b_wait_items);
+		xSemaphoreTake(h_items_bin_sem, portMAX_DELAY);
 
-//		2 bArrived . signal ()
-		LOGGER_INFO(p_task_b_signal_b_Arrived);
-		xSemaphoreGive(h_BTaskArrived_bin_sem);
+		LOGGER_INFO(p_task_b_wait_mutex);
+		xSemaphoreTake(h_buffer_mutex_mut_sem, portMAX_DELAY);
+		{
+			LOGGER_INFO(p_task_b_critical_section);
+			buffer_pop(&event);
+		}
+		LOGGER_INFO(p_task_b_signal_mutex);
+		xSemaphoreGive(h_buffer_mutex_mut_sem);
 
-//		3 aArrived . wait ()
-		LOGGER_INFO(p_task_b_wait_a_Arrived);
-		xSemaphoreTake(h_ATaskArrived_bin_sem, portMAX_DELAY);
+		LOGGER_INFO(p_task_b_signal_spaces);
+		xSemaphoreGive(h_spaces_cnt_sem);
 
-
-//		4 statement b2
-		LOGGER_INFO(p_task_b_statement_a2);
+    	/* Print out: Wait 250mS */
 		LOGGER_INFO(p_task_b_wait_250mS);
 		vTaskDelay(TASK_B_DEL_MAX);
-
 	}
 }
 

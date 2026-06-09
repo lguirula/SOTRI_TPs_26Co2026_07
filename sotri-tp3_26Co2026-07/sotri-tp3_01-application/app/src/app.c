@@ -47,6 +47,8 @@
 #include "task_a.h"
 #include "task_b.h"
 
+#include <stdbool.h>
+
 /********************** macros and definitions *******************************/
 #define G_APP_CNT_INI					0ul
 #define G_APP_TASK_CNT_INI				0ul
@@ -56,7 +58,14 @@
 #define G_TASKS_CNT_INI					0ul
 
 /********************** internal data declaration ****************************/
-
+#define BUFFER_SIZE 10
+typedef struct {
+	uint32_t buffer[BUFFER_SIZE];
+	uint32_t head;
+	uint32_t tail;
+	uint32_t count;
+} CircularBuffer_t;
+static CircularBuffer_t circular_buffer;
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
@@ -76,6 +85,7 @@ uint32_t g_task_idle_cnt;
 uint32_t g_app_stack_overflow_cnt;
 
 uint32_t g_tasks_cnt;
+uint32_t g_reader_cnt;
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
 
@@ -86,8 +96,10 @@ uint32_t g_tasks_cnt;
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_a;
 TaskHandle_t h_task_b;
-SemaphoreHandle_t h_ATaskArrived_bin_sem;
-SemaphoreHandle_t h_BTaskArrived_bin_sem;
+
+SemaphoreHandle_t h_buffer_mutex_mut_sem;
+SemaphoreHandle_t h_items_bin_sem;
+SemaphoreHandle_t h_spaces_cnt_sem;
 
 /********************** external functions definition ************************/
 void app_init(void)
@@ -101,15 +113,7 @@ void app_init(void)
 
 	g_tasks_cnt = G_TASKS_CNT_INI;
 
-
-	h_ATaskArrived_bin_sem = xSemaphoreCreateBinary();
-	configASSERT(NULL != h_ATaskArrived_bin_sem);
-	vQueueAddToRegistry(h_ATaskArrived_bin_sem	, "A to B Bin Sem Handle)");
-
-	h_BTaskArrived_bin_sem = xSemaphoreCreateBinary();
-	configASSERT(NULL != h_BTaskArrived_bin_sem);
-	vQueueAddToRegistry(h_BTaskArrived_bin_sem	, "B to A Bin Sem Handle)");
-
+	g_reader_cnt = G_TASKS_CNT_INI;
 
 	/* Print out: Application Initialized */
 	LOGGER_INFO(" ");
@@ -126,6 +130,19 @@ void app_init(void)
      * successfully.
      *
      * Add queue or semaphore (binary or counting) or mutex to registry. */
+	h_buffer_mutex_mut_sem = xSemaphoreCreateMutex();
+	configASSERT(NULL != h_buffer_mutex_mut_sem);
+	vQueueAddToRegistry(h_buffer_mutex_mut_sem, "buffer mutex semaphore handle");
+
+	h_items_bin_sem = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_items_bin_sem);
+	vQueueAddToRegistry(h_items_bin_sem, "items semaphore handle");
+
+	h_spaces_cnt_sem = xSemaphoreCreateCounting(BUFFER_SIZE, BUFFER_SIZE);
+	configASSERT(NULL != h_spaces_cnt_sem);
+	vQueueAddToRegistry(h_spaces_cnt_sem, "spaces count handle");
+
+	xSemaphoreGive(h_buffer_mutex_mut_sem);
 
 	/* Add threads, ... */
     BaseType_t ret;
@@ -135,7 +152,7 @@ void app_init(void)
 					  "Task A",							/* Text name for the task. This is to facilitate debugging only. */
 					  (configMINIMAL_STACK_SIZE),		/* Stack depth in words. */
 					  NULL,								/* We are not using the task parameter. */
-					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 1. */
+					  (tskIDLE_PRIORITY + 1ul),			/* This task will run at priority 1. */
 					  &h_task_a);						/* We are using a variable as task handle. */
 
     /* Check the thread was created successfully. */
@@ -169,4 +186,33 @@ void app_init(void)
 	cycle_counter_init();
 }
 
+
+void buffer_init() {
+	circular_buffer.head = 0;
+	circular_buffer.tail = 0;
+	circular_buffer.count = 0;
+}
+
+bool buffer_push(uint32_t data) {
+
+	if (circular_buffer.count == BUFFER_SIZE) {
+		return false;  // Buffer Full
+	}
+
+	circular_buffer.buffer[circular_buffer.head] = data;
+	circular_buffer.head = (circular_buffer.head + 1) % BUFFER_SIZE;
+	circular_buffer.count++;
+	return true;
+}
+
+bool buffer_pop(uint32_t * data) {
+	if (circular_buffer.count == 0) {
+		return false;  // Buffer Empty
+	}
+
+	*data = circular_buffer.buffer[circular_buffer.tail];
+	circular_buffer.tail = (circular_buffer.tail + 1) % BUFFER_SIZE;
+	circular_buffer.count--;
+	return true;
+}
 /********************** end of file ******************************************/

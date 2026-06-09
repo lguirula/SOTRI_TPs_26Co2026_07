@@ -56,19 +56,18 @@
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-//const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
-const char *p_task_a_statement_a1 		= "   ==> Task    A - Statement A1";
-const char *p_task_a_wait_b_arraived	= "   ==> Task    A - Wait:		B Arrived";
-const char *p_task_a_signal_a_arraived	= "   ==> Task    A - Signal:	A Arrived ==>";
-const char *p_task_a_statement_a2		= "   ==> Task    A - Statement A2";
-
+const char *p_task_a_wait_space			= "   ==> Task    A - Wait:   space";
+const char *p_task_a_wait_mutex			= "   ==> Task    A - Wait:   mutex";
+const char *p_task_a_critical_section	= "   ==> Task    A - Critical section: adding element";
+const char *p_task_a_signal_mutex		= "   ==> Task    A - Signal: mutex ==>";
+const char *p_task_a_signal_items		= "   ==> Task    A - Signal: items ==>";
 const char *p_task_a_wait_250mS			= "   ==> Task    A - Wait:   250mS";
 
 /********************** external data declaration ****************************/
 uint32_t g_task_a_cnt;
 
 /********************** external functions definition ************************/
-/* Task thread */
+/* Producer thread */
 void task_a(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
@@ -78,30 +77,30 @@ void task_a(void *parameters)
 	LOGGER_INFO(" ");
 	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
 
-	vTaskPrioritySet(task_a, uxTaskPriorityGet(h_task_b));
-
 	/* As per most tasks, this task is implemented in an infinite loop. */
 	for (;;)
 	{
-
+		/* Update Task Counter */
 		g_task_a_cnt++;
 
-//		1 statement a1
-		LOGGER_INFO(p_task_a_statement_a1);
+		LOGGER_INFO(p_task_a_wait_space);
+		xSemaphoreTake(h_spaces_cnt_sem, portMAX_DELAY);
 
-//		2 aArrived . signal ()
-		LOGGER_INFO(p_task_a_signal_a_arraived);
-		xSemaphoreGive(h_ATaskArrived_bin_sem);
+		LOGGER_INFO(p_task_a_wait_mutex);
+		xSemaphoreTake(h_buffer_mutex_mut_sem, portMAX_DELAY);
+		{
+			LOGGER_INFO(p_task_a_critical_section);
+			buffer_push(g_task_a_cnt);
+		}
+		LOGGER_INFO(p_task_a_signal_mutex);
+		xSemaphoreGive(h_buffer_mutex_mut_sem);
 
-//		3 bArrived . wait ()
-		LOGGER_INFO(p_task_a_wait_b_arraived);
-		xSemaphoreTake(h_BTaskArrived_bin_sem, portMAX_DELAY);
+		LOGGER_INFO(p_task_a_signal_items);
+		xSemaphoreGive(h_items_bin_sem);
 
-//		4 statement a2
-		LOGGER_INFO(p_task_a_statement_a2);
+    	/* Print out: Wait 250mS */
 		LOGGER_INFO(p_task_a_wait_250mS);
 		vTaskDelay(TASK_A_DEL_MAX);
-
 	}
 }
 

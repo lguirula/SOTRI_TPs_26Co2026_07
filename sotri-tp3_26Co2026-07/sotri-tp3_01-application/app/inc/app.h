@@ -41,12 +41,11 @@ extern "C" {
 #endif
 
 /********************** inclusions *******************************************/
-
+#include <stdbool.h>
 /********************** macros ***********************************************/
 #define TASK_QTY 2ul
 
 /********************** typedef **********************************************/
-
 /********************** external data declaration ****************************/
 extern uint32_t g_app_cnt;
 extern uint32_t g_app_task_cnt;
@@ -54,21 +53,29 @@ extern volatile uint32_t g_app_tick_cnt;
 extern uint32_t g_task_idle_cnt;
 extern uint32_t g_app_stack_overflow_cnt;
 
+extern uint32_t g_reader_cnt;
+
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
 
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread
  * with other thread or to ensure mutual exclusive access to...*/
-extern SemaphoreHandle_t h_ATaskArrived_bin_sem;
-extern SemaphoreHandle_t h_BTaskArrived_bin_sem;
+
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 extern TaskHandle_t h_task_a;
 extern TaskHandle_t h_task_b;
-#include "semphr.h"
+extern TaskHandle_t h_task_c;
 
-//extern SemaphoreHandle_t sem_prod_cons;
+extern SemaphoreHandle_t h_buffer_mutex_mut_sem;
+extern SemaphoreHandle_t h_items_bin_sem;
+extern SemaphoreHandle_t h_spaces_cnt_sem;
+
 /********************** external functions declaration ***********************/
 extern void app_init(void);
+
+extern void buffer_init();
+extern bool buffer_push(uint32_t data);
+extern bool buffer_pop(uint32_t * data);
 
 /********************** End of CPP guard *************************************/
 #ifdef __cplusplus
@@ -78,4 +85,3 @@ extern void app_init(void);
 #endif /* APP_H_ */
 
 /********************** end of file ******************************************/
-
