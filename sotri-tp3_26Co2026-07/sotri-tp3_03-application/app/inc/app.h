@@ -57,6 +57,8 @@ extern uint32_t g_task_idle_cnt;
 extern uint32_t g_app_stack_overflow_cnt;
 
 extern uint32_t	g_tasks_cnt;
+extern uint32_t g_tasks_a_cnt;
+extern uint32_t g_tasks_b_cnt;
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
 
@@ -66,10 +68,10 @@ extern uint32_t	g_tasks_cnt;
 extern SemaphoreHandle_t h_entry_a_bin_sem;
 extern SemaphoreHandle_t h_exit_a_bin_sem;
 extern SemaphoreHandle_t h_continue_bin_sem;
-
-extern SemaphoreHandle_t h_mutex_mut_sem;
 extern SemaphoreHandle_t h_entry_b_bin_sem;
 extern SemaphoreHandle_t h_exit_b_bin_sem;
+extern SemaphoreHandle_t h_road_crossing_mut_sem;
+extern SemaphoreHandle_t h_mutex_mut_sem;
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 extern TaskHandle_t h_task_entry_a;
 extern TaskHandle_t h_task_exit_a;

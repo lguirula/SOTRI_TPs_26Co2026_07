@@ -52,12 +52,19 @@
 #define TASK_EXIT_A_DEL_MAX		(pdMS_TO_TICKS(2500ul))
 
 /********************** internal data declaration ****************************/
-
+bool is_the_lane_free;
+static bool should_release_road_cross;
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-const char *p_task_exit_a_wait_2500mS		= "   ==> Task Exit A  - Wait:   2500mS";
-
+const char *p_task_exit_a					= "Task Exit A - Output Gateway A";
+const char *p_task_exit_a_wait_2500mS		= "   ==> Task  Exit A - Wait:   2500mS";
+const char *p_task_exit_a_wait_exit_a		= "   ==> Task  Exit A - Wait:   Exit A";
+const char *p_task_exit_a_wait_mutex		= "   ==> Task  Exit A - Wait:   Mutex";
+const char *p_task_exit_a_signal_continue	= "   ==> Task  Exit A - Signal: Continue ==>";
+const char *p_task_exit_a_signal_mutex			= "   ==> Task  Exit A - Signal: Mutex    ==>";
+const char *p_task_exit_a_g_tasks_a_cnt			= "   <=> Task  Exit A - g_tasks_a_cnt :";
+const char *p_task_entry_a_release_road_cross	= "   ==> Task Entry A - Release:   Road cross";
 /********************** external data declaration *****************************/
 uint32_t g_task_exit_a_cnt;
 
@@ -67,7 +74,8 @@ void task_exit_a(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
 	g_task_exit_a_cnt = G_TASK_EXIT_A_CNT_INI;
-
+	is_the_lane_free = false;
+	should_release_road_cross = false;
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
 	LOGGER_INFO("  %s is running - Tick [mS] = %lu", pcTaskGetName(NULL), xTaskGetTickCount());
@@ -76,12 +84,46 @@ void task_exit_a(void *parameters)
 	for (;;)
 	{
 		/* Update Task Counter */
-		xSemaphoreTake(h_exit_a_bin_sem, portMAX_DELAY);
 		g_task_exit_a_cnt++;
 
-    	/* Print out: Wait 2500mS */
-		LOGGER_INFO("EXIT A event");
-		vTaskDelay(TASK_EXIT_A_DEL_ZERO);
+		LOGGER_INFO(p_task_exit_a_wait_exit_a);
+		xSemaphoreTake(h_exit_a_bin_sem, portMAX_DELAY);
+		{
+			LOGGER_INFO(p_task_exit_a_wait_mutex);		// "   ==> Task  Exit A - Wait:   Mutex";
+			xSemaphoreTake(h_mutex_mut_sem, portMAX_DELAY);
+
+			g_tasks_a_cnt--;
+			LOGGER_INFO("  %s %d", p_task_exit_a_g_tasks_a_cnt, (int)g_tasks_a_cnt);
+
+			if (0 == g_tasks_a_cnt) {
+				should_release_road_cross = true;
+			}
+
+			if ((G_TASKS_CNT_MAX - 1) == g_tasks_a_cnt) {
+				/* Set Task Exit A Flag */
+				is_the_lane_free = true;
+			}
+
+			LOGGER_INFO(p_task_exit_a_signal_mutex);	// "   ==> Task  Exit A - Signal: Mutex    ==>";
+			xSemaphoreGive(h_mutex_mut_sem);
+
+			if (true == is_the_lane_free) {
+				/* Reset Task Entry A Flag */
+				is_the_lane_free = false;
+
+				/* Do it here */
+				// Continue . Signal
+				LOGGER_INFO(p_task_exit_a_signal_continue);
+				xSemaphoreGive(h_continue_bin_sem);
+			}
+
+			if (true == should_release_road_cross) {
+				LOGGER_INFO(p_task_entry_a_release_road_cross);
+				xSemaphoreGive(h_road_crossing_mut_sem);
+			}
+
+		}
+
 	}
 }
 

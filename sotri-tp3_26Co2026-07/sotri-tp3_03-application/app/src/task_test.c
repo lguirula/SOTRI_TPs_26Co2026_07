@@ -69,7 +69,7 @@ const char *p_task_test_wait_5000mS			= "  <=> Task Test - Wait:   5000mS";
 const char *p_task_test_signal_entry_a		= "  <=> Task Test - Signal: Entry_A  <=>";
 const char *p_task_test_signal_exit_a		= "  <=> Task Test - Signal: Exit_A   <=>";
 
-#define E_TASK_TEST_X (1)
+#define E_TASK_TEST_X (3)
 
 #if (E_TASK_TEST_X == 0)
 /* Array of events to excite tasks */
@@ -89,7 +89,7 @@ const e_task_test_t e_task_test_array[] = {Entry_A, Entry_A, Exit_A, Exit_A};
 
 #if (E_TASK_TEST_X == 3)
 /* Array of events to excite tasks */
-const e_task_test_t e_task_test_array[] = {Entry_A, Entry_A, Entry_A, Exit_A, Exit_A, Exit_A};
+const e_task_test_t e_task_test_array[] = {Entry_A, Entry_A, Entry_A, Entry_B, Exit_A, Exit_A, Exit_A, Exit_B};
 #endif
 
 #if (E_TASK_TEST_X == 4)
@@ -157,9 +157,7 @@ void task_test(void *parameters)
 
 	    		case Entry_A:
 
-
 	    		    LOGGER_INFO(p_task_test_signal_entry_a);
-
 	    		    xSemaphoreGive(h_entry_a_bin_sem);
 
 		    		break;
@@ -168,14 +166,12 @@ void task_test(void *parameters)
 	    		case Exit_A:
 
 	    		    LOGGER_INFO(p_task_test_signal_exit_a);
-
 	    		    xSemaphoreGive(h_exit_a_bin_sem);
 
 		    		break;
 	    		case Entry_B:
 
 	    		    LOGGER_INFO("  <=> Task Test - Signal: Entry_B  <=>");
-
 	    		    xSemaphoreGive(h_entry_b_bin_sem);
 
 	    		    break;
@@ -183,7 +179,6 @@ void task_test(void *parameters)
 	    		case Exit_B:
 
 	    		    LOGGER_INFO("  <=> Task Test - Signal: Exit_B   <=>");
-
 	    		    xSemaphoreGive(h_exit_b_bin_sem);
 
 	    		    break;

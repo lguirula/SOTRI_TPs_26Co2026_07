@@ -75,6 +75,8 @@ uint32_t g_task_idle_cnt;
 uint32_t g_app_stack_overflow_cnt;
 
 uint32_t g_tasks_cnt;
+uint32_t g_tasks_a_cnt;
+uint32_t g_tasks_b_cnt;
 
 /* Declare a variable of type QueueHandle_t. This is used to reference queues*/
 
@@ -87,7 +89,10 @@ SemaphoreHandle_t h_exit_a_bin_sem;
 SemaphoreHandle_t h_entry_b_bin_sem;
 SemaphoreHandle_t h_exit_b_bin_sem;
 
+SemaphoreHandle_t h_continue_bin_sem;
+
 SemaphoreHandle_t h_mutex_mut_sem;
+SemaphoreHandle_t h_road_crossing_mut_sem;
 
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_entry_a;
@@ -100,18 +105,33 @@ TaskHandle_t h_task_test;
 void app_init(void)
 {
 	h_entry_a_bin_sem = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_entry_a_bin_sem);
+	vQueueAddToRegistry(h_entry_a_bin_sem, "Entry A BIN Handle");
+
 	h_exit_a_bin_sem  = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_exit_a_bin_sem);
+	vQueueAddToRegistry(h_entry_a_bin_sem, "Exit A BIN Handle");
 
 	h_entry_b_bin_sem = xSemaphoreCreateBinary();
-	h_exit_b_bin_sem  = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_entry_b_bin_sem);
+	vQueueAddToRegistry(h_entry_b_bin_sem, "Entry B BIN Handle");
 
-	h_mutex_mut_sem   = xSemaphoreCreateMutex();
+	h_exit_b_bin_sem = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_exit_b_bin_sem);
+	vQueueAddToRegistry(h_exit_b_bin_sem, "Exit B BIN Handle");
 
-	configASSERT(h_entry_a_bin_sem);
-	configASSERT(h_exit_a_bin_sem);
-	configASSERT(h_entry_b_bin_sem);
-	configASSERT(h_exit_b_bin_sem);
-	configASSERT(h_mutex_mut_sem);
+	h_continue_bin_sem = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_continue_bin_sem);
+	vQueueAddToRegistry(h_continue_bin_sem, "Continue BIN Handle");
+
+	h_mutex_mut_sem = xSemaphoreCreateMutex();
+	configASSERT(NULL != h_mutex_mut_sem);
+	vQueueAddToRegistry(h_mutex_mut_sem, "Mutex MUT Handle");
+
+	h_road_crossing_mut_sem = xSemaphoreCreateMutex();
+	configASSERT(NULL != h_road_crossing_mut_sem);
+	vQueueAddToRegistry(h_road_crossing_mut_sem, "Road crossing MUT Handle");
+
 	/*  Declare & Initialize App variables */
 	g_app_cnt = G_APP_CNT_INI;
 	g_app_task_cnt = G_APP_TASK_CNT_INI;
@@ -120,6 +140,8 @@ void app_init(void)
 	g_app_stack_overflow_cnt = G_APP_STACK_OVERFLOW_CNT_INI;
 
 	g_tasks_cnt = G_TASKS_CNT_INI;
+	g_tasks_a_cnt = G_TASKS_CNT_INI;
+	g_tasks_b_cnt = G_TASKS_CNT_INI;
 
 	/* Print out: Application Initialized */
 	LOGGER_INFO(" ");
@@ -145,7 +167,7 @@ void app_init(void)
 					  "Task Entry A",					/* Text name for the task. This is to facilitate debugging only. */
 					  (configMINIMAL_STACK_SIZE),		/* Stack depth in words. */
 					  NULL,								/* We are not using the task parameter. */
-					  (tskIDLE_PRIORITY + 3ul),			/* This task will run at priority 1. */
+					  (tskIDLE_PRIORITY + 3ul),			/* This task will run at priority 3. */
 					  &h_task_entry_a);					/* We are using a variable as task handle. */
 
     /* Check the thread was created successfully. */
@@ -156,7 +178,7 @@ void app_init(void)
 					  "Task Exit A",					/* Text name for the task. This is to facilitate debugging only. */
 					  (configMINIMAL_STACK_SIZE),		/* Stack depth in words. */
 					  NULL,								/* We are not using the task parameter. */
-					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 1. */
+					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 2. */
 					  &h_task_exit_a);					/* We are using a variable as task handle. */
 
     /* Check the thread was created successfully. */
@@ -167,7 +189,7 @@ void app_init(void)
 					  "Task Entry B",					/* Text name for the task. This is to facilitate debugging only. */
 					  (configMINIMAL_STACK_SIZE),		/* Stack depth in words. */
 					  NULL,								/* We are not using the task parameter. */
-					  (tskIDLE_PRIORITY + 3ul),			/* This task will run at priority 1. */
+					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 2. */
 					  &h_task_entry_b);					/* We are using a variable as task handle. */
 
     /* Check the thread was created successfully. */
@@ -178,7 +200,7 @@ void app_init(void)
 					  "Task Exit B",					/* Text name for the task. This is to facilitate debugging only. */
 					  (configMINIMAL_STACK_SIZE),		/* Stack depth in words. */
 					  NULL,								/* We are not using the task parameter. */
-					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 1. */
+					  (tskIDLE_PRIORITY + 2ul),			/* This task will run at priority 2. */
 					  &h_task_exit_b);					/* We are using a variable as task handle. */
 
     /* Check the thread was created successfully. */

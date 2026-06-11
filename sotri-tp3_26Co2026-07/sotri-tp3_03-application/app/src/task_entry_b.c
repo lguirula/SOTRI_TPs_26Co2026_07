@@ -52,12 +52,21 @@
 #define TASK_ENTRY_B_DEL_MAX	(pdMS_TO_TICKS(2500ul))
 
 /********************** internal data declaration ****************************/
-
+bool is_the_lane_full_2;
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
+const char *p_task_entry_b				    = "Task Entry B - Input Gateway B";
 const char *p_task_entry_b_wait_2500mS		= "   ==> Task Entry B - Wait:   2500mS";
-
+const char *p_task_entry_b_wait_entry_b		= "   ==> Task Entry B - Wait:   Entry B";
+const char *p_task_entry_b_wait_continue	= "   ==> Task Entry B - Wait:   Continue";
+const char *p_task_entry_b_wait_mutex		= "   ==> Task Entry B - Wait:   Mutex";
+const char *p_task_entry_b_wait_mutex_read  = "   ==> Task Entry B - Wait:   Read - Mutex";
+const char *p_task_entry_b_signal_mutex_read  = "   ==> Task Entry B - Signal:   Read - Mutex";
+const char *p_task_entry_b_signal_mutex		= "   ==> Task Entry B - Signal: Mutex    ==>";
+const char *p_task_entry_b_g_tasks_b_cnt		= "   <=> Task Entry B - g_tasks_b_cnt :";
+const char *p_task_entry_b_wait_road_cross	= "   ==> Task Entry B - Wait:   Road cross";
+const char *p_task_entry_b_take_road_cross	= "   ==> Task Entry B - Take:   Road cross";
 /********************** external data declaration *****************************/
 uint32_t g_task_entry_b_cnt;
 
@@ -67,6 +76,7 @@ void task_entry_b(void *parameters)
 {
 	/*  Declare & Initialize Task Function variables */
 	g_task_entry_b_cnt = G_TASK_ENTRY_B_CNT_INI;
+	is_the_lane_full_2 = false;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -76,13 +86,47 @@ void task_entry_b(void *parameters)
 	for (;;)
 	{
 		/* Update Task Counter */
-		xSemaphoreTake(h_entry_b_bin_sem, portMAX_DELAY);
 		g_task_entry_b_cnt++;
 
-    	/* Print out: Wait 2500mS */
-		LOGGER_INFO("ENTRY B event");
-		//LOGGER_INFO(p_task_entry_b_wait_2500mS);
-		//vTaskDelay(TASK_ENTRY_B_DEL_MAX);
+		LOGGER_INFO(p_task_entry_b_wait_entry_b);
+		xSemaphoreTake(h_entry_b_bin_sem, portMAX_DELAY);
+		{
+
+			LOGGER_INFO(p_task_entry_b_wait_mutex_read);
+			xSemaphoreTake(h_mutex_mut_sem, portMAX_DELAY);
+
+			if (g_tasks_b_cnt == 0) {
+				LOGGER_INFO(p_task_entry_b_signal_mutex_read);
+				xSemaphoreGive(h_mutex_mut_sem);
+
+				LOGGER_INFO(p_task_entry_b_wait_road_cross);
+				xSemaphoreTake(h_road_crossing_mut_sem, portMAX_DELAY);
+				LOGGER_INFO(p_task_entry_b_take_road_cross);
+
+				LOGGER_INFO(p_task_entry_b_wait_mutex);
+				xSemaphoreTake(h_mutex_mut_sem, portMAX_DELAY);
+			}
+
+			g_tasks_b_cnt++;
+			LOGGER_INFO("%s %d", p_task_entry_b_g_tasks_b_cnt, (int)g_tasks_b_cnt);
+
+			if (G_TASKS_CNT_MAX == g_tasks_b_cnt) {
+				/* Set Task Entry A Flag */
+				is_the_lane_full_2 = true;
+			}
+
+			LOGGER_INFO(p_task_entry_b_signal_mutex);	// "   ==> Task  Exit B - Signal: Mutex    ==>";
+			xSemaphoreGive(h_mutex_mut_sem);
+
+			if (true == is_the_lane_full_2) {
+				is_the_lane_full_2 = false;
+
+				LOGGER_INFO(p_task_entry_b_wait_continue);
+				xSemaphoreTake(h_continue_bin_sem, portMAX_DELAY);
+			}
+
+		}
+
 	}
 }
 
