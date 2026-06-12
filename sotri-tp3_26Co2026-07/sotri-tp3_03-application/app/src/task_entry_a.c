@@ -52,19 +52,23 @@
 #define TASK_ENTRY_A_DEL_MAX	(pdMS_TO_TICKS(2500ul))
 
 /********************** internal data declaration ****************************/
-bool is_the_lane_full;
+static bool is_the_lane_full;
+static bool should_block_b;
 /********************** internal functions declaration ***********************/
 
 /********************** internal data definition *****************************/
-const char *p_task_entry_a				    = "Task Entry A - Input Gateway A";
-const char *p_task_entry_a_wait_2500mS		= "   ==> Task Entry A - Wait:   2500mS";
-const char *p_task_entry_a_wait_entry_a		= "   ==> Task Entry A - Wait:   Entry A";
-const char *p_task_entry_a_wait_continue	= "   ==> Task Entry A - Wait:   Continue";
-const char *p_task_entry_a_wait_mutex		= "   ==> Task Entry A - Wait:   Mutex";
-const char *p_task_entry_a_wait_road_cross	= "   ==> Task Entry A - Wait:   Road cross";
-const char *p_task_entry_a_take_road_cross	= "   ==> Task Entry A - Take:   Road cross";
-const char *p_task_entry_a_signal_mutex		= "   ==> Task Entry A - Signal: Mutex    ==>";
-const char *p_task_entry_a_g_tasks_a_cnt		= "   <=> Task Entry A - g_tasks_a_cnt :";
+const char *p_task_entry_a				    		= "Task Entry A - Input Gateway A";
+const char *p_task_entry_a_wait_2500mS				= "   ==> Task Entry A - Wait:   2500mS";
+const char *p_task_entry_a_wait_entry_a				= "   ==> Task Entry A - Wait:   Entry A";
+const char *p_task_entry_a_wait_traffic_light_a		= "   ==> Task Entry A - Wait:   Traffic Light A";
+const char *p_task_entry_a_signal_traffic_light_a	= "   ==> Task Entry A - Signal:   Traffic Light A";
+const char *p_task_entry_a_block_traffic_light_b	= "   ==> Task Entry A - Block:   Traffic Light B";
+const char *p_task_entry_a_wait_continue			= "   ==> Task Entry A - Wait:   Continue";
+const char *p_task_entry_a_wait_mutex				= "   ==> Task Entry A - Wait:   Mutex";
+const char *p_task_entry_a_wait_road_cross			= "   ==> Task Entry A - Wait:   Road cross";
+const char *p_task_entry_a_take_road_cross			= "   ==> Task Entry A - Take:   Road cross";
+const char *p_task_entry_a_signal_mutex				= "   ==> Task Entry A - Signal: Mutex    ==>";
+const char *p_task_entry_a_g_tasks_cnt				= "   <=> Task Entry A - g_tasks_cnt :";
 /********************** external data declaration *****************************/
 uint32_t g_task_entry_a_cnt;
 
@@ -75,6 +79,7 @@ void task_entry_a(void *parameters)
 	/*  Declare & Initialize Task Function variables */
 	g_task_entry_a_cnt = G_TASK_ENTRY_A_CNT_INI;
 	is_the_lane_full = false;
+	should_block_b = false;
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");
@@ -83,11 +88,15 @@ void task_entry_a(void *parameters)
 	/* Take the semaphore once to start with so the semaphore is empty before the
 	 * infinite loop is entered.  The semaphore was created before the scheduler
 	 * was started so before this task ran for the first time.*/
-    xSemaphoreTake(h_entry_a_bin_sem, (portTickType) 0);	// h_entry_a_bin_sem = Semaphore(0)
-    xSemaphoreTake(h_exit_a_bin_sem, (portTickType) 0);		// h_exitry_a_bin_sem = Semaphore(0)
+    xSemaphoreGive(h_traffic_light_a_bin_sem);				// h_entry_a_bin_sem = Semaphore(1)
+	xSemaphoreTake(h_entry_a_bin_sem, (portTickType) 0);	// h_entry_a_bin_sem = Semaphore(0)
+    xSemaphoreTake(h_exit_a_bin_sem, (portTickType) 0);		// h_exit_a_bin_sem = Semaphore(0)
+
+    xSemaphoreGive(h_traffic_light_b_bin_sem);				// h_entry_a_bin_sem = Semaphore(1)
     xSemaphoreTake(h_entry_b_bin_sem, (portTickType) 0);	// h_entry_b_bin_sem = Semaphore(0)
-    xSemaphoreTake(h_exit_b_bin_sem, (portTickType) 0);		// h_exitry_b_bin_sem = Semaphore(0)
-	xSemaphoreTake(h_continue_bin_sem, (portTickType) 0);	// h_continue_bin_sem = Semaphore(0)
+    xSemaphoreTake(h_exit_b_bin_sem, (portTickType) 0);		// h_exit_b_bin_sem = Semaphore(0)
+
+    xSemaphoreTake(h_continue_bin_sem, (portTickType) 0);	// h_continue_bin_sem = Semaphore(0)
 
     /* Setting the priority of Task A above the priority of other tasks will
      * cause Task A to start executing immediately, allowing it to put the
@@ -103,44 +112,47 @@ void task_entry_a(void *parameters)
 
 		LOGGER_INFO(p_task_entry_a_wait_entry_a);
 		xSemaphoreTake(h_entry_a_bin_sem, portMAX_DELAY);
-
 		{
 
-			LOGGER_INFO(p_task_entry_a_wait_mutex);
-			xSemaphoreTake(h_mutex_mut_sem, portMAX_DELAY);
+			LOGGER_INFO(p_task_entry_a_wait_traffic_light_a);
+			xSemaphoreTake(h_traffic_light_a_bin_sem, portMAX_DELAY);
+			{
 
-			if (g_tasks_a_cnt == 0) {
-				LOGGER_INFO(p_task_entry_a_wait_mutex);
+				LOGGER_INFO(p_task_entry_a_wait_mutex);		// "   ==> Task  Exit A - Wait:   Mutex";
+				xSemaphoreTake(h_mutex_mut_sem, portMAX_DELAY);
+				{
+					g_tasks_cnt++;
+					LOGGER_INFO("%s %d", p_task_entry_a_g_tasks_cnt, (int)g_tasks_cnt);
+
+					if (1 == g_tasks_cnt) {
+						should_block_b = true;
+					}
+
+					if (G_TASKS_CNT_MAX == g_tasks_cnt) {
+						/* Set Task Entry A Flag */
+						is_the_lane_full = true;
+					}
+				}
+				LOGGER_INFO(p_task_entry_a_signal_mutex);	// "   ==> Task  Exit A - Signal: Mutex    ==>";
 				xSemaphoreGive(h_mutex_mut_sem);
 
-				LOGGER_INFO(p_task_entry_a_wait_road_cross);
-				xSemaphoreTake(h_road_crossing_mut_sem, portMAX_DELAY);
-				LOGGER_INFO(p_task_entry_a_take_road_cross);
+				if (true == should_block_b) {
+					should_block_b = false;
+					LOGGER_INFO(p_task_entry_a_block_traffic_light_b);
+					xSemaphoreTake(h_traffic_light_b_bin_sem, portMAX_DELAY);
+				}
 
-				LOGGER_INFO(p_task_entry_a_wait_mutex);
-				xSemaphoreTake(h_mutex_mut_sem, portMAX_DELAY);
+				if (true == is_the_lane_full) {
+					is_the_lane_full = false;
+					LOGGER_INFO(p_task_entry_a_wait_continue);
+					xSemaphoreTake(h_continue_bin_sem, portMAX_DELAY);
+				}
+
+				LOGGER_INFO(p_task_entry_a_signal_traffic_light_a);
+				xSemaphoreGive(h_traffic_light_a_bin_sem);
+
 			}
-
-			g_tasks_a_cnt++;
-			LOGGER_INFO("%s %d", p_task_entry_a_g_tasks_a_cnt, (int)g_tasks_a_cnt);
-
-			if (G_TASKS_CNT_MAX == g_tasks_a_cnt) {
-				/* Set Task Entry A Flag */
-				is_the_lane_full = true;
-			}
-
-			LOGGER_INFO(p_task_entry_a_signal_mutex);	// "   ==> Task  Exit A - Signal: Mutex    ==>";
-			xSemaphoreGive(h_mutex_mut_sem);
-
-			if (true == is_the_lane_full) {
-				is_the_lane_full = false;
-
-				LOGGER_INFO(p_task_entry_a_wait_continue);
-				xSemaphoreTake(h_continue_bin_sem, portMAX_DELAY);
-			}
-
 		}
-
 	}
 }
 

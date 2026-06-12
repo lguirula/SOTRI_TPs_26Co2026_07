@@ -69,7 +69,7 @@ const char *p_task_test_wait_5000mS			= "  <=> Task Test - Wait:   5000mS";
 const char *p_task_test_signal_entry_a		= "  <=> Task Test - Signal: Entry_A  <=>";
 const char *p_task_test_signal_exit_a		= "  <=> Task Test - Signal: Exit_A   <=>";
 
-#define E_TASK_TEST_X (3)
+#define E_TASK_TEST_X (1)
 
 #if (E_TASK_TEST_X == 0)
 /* Array of events to excite tasks */

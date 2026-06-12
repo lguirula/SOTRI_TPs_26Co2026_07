@@ -83,16 +83,17 @@ uint32_t g_tasks_b_cnt;
 /* Declare a variable of type SemaphoreHandle_t (binary or counting) or mutex.
  * This is used to reference the semaphore that is used to synchronize a thread
  * with other thread or to ensure mutual exclusive access to...*/
+SemaphoreHandle_t h_traffic_light_a_bin_sem;
 SemaphoreHandle_t h_entry_a_bin_sem;
 SemaphoreHandle_t h_exit_a_bin_sem;
 
+SemaphoreHandle_t h_traffic_light_b_bin_sem;
 SemaphoreHandle_t h_entry_b_bin_sem;
 SemaphoreHandle_t h_exit_b_bin_sem;
 
 SemaphoreHandle_t h_continue_bin_sem;
 
 SemaphoreHandle_t h_mutex_mut_sem;
-SemaphoreHandle_t h_road_crossing_mut_sem;
 
 /* Declare a variable of type TaskHandle_t. This is used to reference threads. */
 TaskHandle_t h_task_entry_a;
@@ -104,6 +105,10 @@ TaskHandle_t h_task_test;
 /********************** external functions definition ************************/
 void app_init(void)
 {
+	h_traffic_light_a_bin_sem = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_traffic_light_a_bin_sem);
+	vQueueAddToRegistry(h_traffic_light_a_bin_sem, "Traffic light A BIN Handle");
+
 	h_entry_a_bin_sem = xSemaphoreCreateBinary();
 	configASSERT(NULL != h_entry_a_bin_sem);
 	vQueueAddToRegistry(h_entry_a_bin_sem, "Entry A BIN Handle");
@@ -111,6 +116,10 @@ void app_init(void)
 	h_exit_a_bin_sem  = xSemaphoreCreateBinary();
 	configASSERT(NULL != h_exit_a_bin_sem);
 	vQueueAddToRegistry(h_entry_a_bin_sem, "Exit A BIN Handle");
+
+	h_traffic_light_b_bin_sem = xSemaphoreCreateBinary();
+	configASSERT(NULL != h_traffic_light_b_bin_sem);
+	vQueueAddToRegistry(h_traffic_light_b_bin_sem, "Traffic light B BIN Handle");
 
 	h_entry_b_bin_sem = xSemaphoreCreateBinary();
 	configASSERT(NULL != h_entry_b_bin_sem);
@@ -128,9 +137,6 @@ void app_init(void)
 	configASSERT(NULL != h_mutex_mut_sem);
 	vQueueAddToRegistry(h_mutex_mut_sem, "Mutex MUT Handle");
 
-	h_road_crossing_mut_sem = xSemaphoreCreateMutex();
-	configASSERT(NULL != h_road_crossing_mut_sem);
-	vQueueAddToRegistry(h_road_crossing_mut_sem, "Road crossing MUT Handle");
 
 	/*  Declare & Initialize App variables */
 	g_app_cnt = G_APP_CNT_INI;
@@ -184,7 +190,7 @@ void app_init(void)
     /* Check the thread was created successfully. */
     configASSERT(pdPASS == ret);
 
-    /* Task Entry B thread at priority 3 */
+    /* Task Entry B thread at priority 2 */
     ret = xTaskCreate(task_entry_b,						/* Pointer to the function thats implement the task. */
 					  "Task Entry B",					/* Text name for the task. This is to facilitate debugging only. */
 					  (configMINIMAL_STACK_SIZE),		/* Stack depth in words. */
@@ -205,6 +211,8 @@ void app_init(void)
 
     /* Check the thread was created successfully. */
     configASSERT(pdPASS == ret);
+
+
 
     /* Task Test thread at priority 1 */
     ret = xTaskCreate(task_test,						/* Pointer to the function thats implement the task. */
