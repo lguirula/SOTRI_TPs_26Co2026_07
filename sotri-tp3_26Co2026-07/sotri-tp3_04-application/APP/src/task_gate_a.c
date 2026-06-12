@@ -89,7 +89,11 @@ void task_gate_a(void *parameters)
 	xSemaphoreTake(h_entry_d_bin_sem, (portTickType) 0);	// _bin_sem = Semaphore(0)
 	xSemaphoreTake(h_exit_d_bin_sem, (portTickType) 0);		// _bin_sem = Semaphore(0)
 
-	// _TODO bajar la prioridad de Task A.
+    /* Setting the priority of Task A above the priority of other tasks will
+     * cause Task A to start executing immediately, allowing it to put the
+     * semaphores into the initial state required by the application, and then
+     * regain the same priority of other tasks. */
+	vTaskPrioritySet(h_task_gate_a, (uxTaskPriorityGet(h_task_gate_b)));
 
 	/* Print out: Task Initialized */
 	LOGGER_INFO(" ");

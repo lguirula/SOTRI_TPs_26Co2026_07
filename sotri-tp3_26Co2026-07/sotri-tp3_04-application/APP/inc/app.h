@@ -60,6 +60,10 @@ extern uint32_t	g_tasks_cnt;
 
 extern uint32_t	g_gate_open;
 
+// Para cambio de prioridades
+extern TaskHandle_t h_task_gate_a;
+extern TaskHandle_t h_task_gate_b;
+
 enum gate_open{
 	gate_open_NONE			= 0,
 	gate_open_A				= 1 << 0,
