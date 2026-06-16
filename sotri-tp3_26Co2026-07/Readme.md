@@ -5,7 +5,7 @@
 
 | N° SIU |  Apellidos, Nombres     | Fecha      |  Deadline |
 | :----- | :---------------------- | :--------: | :-------: |
-| e2605  | Lucia Agostina Guirula | 12/06/2026 | Semana 07 |
+| e2605  | Lucia Agostina Guirula | 16/06/2026 | Semana 07 |
 
 ---
 ## Descripción del TP
